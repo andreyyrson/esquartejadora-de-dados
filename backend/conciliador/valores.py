@@ -66,16 +66,15 @@ def _parse_texto(texto: str) -> Decimal:
         resto = resto[:-1].strip()
         negativo = True
         indicadores += 1
-    if resto[:1] in ("-", "+"):
-        negativo = negativo or resto[0] == "-"
-        resto = resto[1:].strip()
-        indicadores += 1
+    sinais = []
+    resto, sinal = _tirar_sinal_inicial(resto)
+    sinais.append(sinal)
     if resto.startswith("R$"):
-        resto = resto[2:].strip()
-        if resto[:1] in ("-", "+"):
-            negativo = negativo or resto[0] == "-"
-            resto = resto[1:].strip()
-            indicadores += 1
+        resto, sinal = _tirar_sinal_inicial(resto[2:].strip())
+        sinais.append(sinal)
+    for sinal in filter(None, sinais):
+        negativo = negativo or sinal == "-"
+        indicadores += 1
 
     if indicadores > 1:
         raise ValorInvalido(f"valor monetário inválido: {texto!r}")
@@ -85,6 +84,13 @@ def _parse_texto(texto: str) -> Decimal:
         raise ValorInvalido(f"valor monetário inválido: {texto!r}")
     quantia = Decimal(numero)
     return -quantia if negativo else quantia
+
+
+def _tirar_sinal_inicial(texto: str) -> tuple[str, str]:
+    """Separa um ``+``/``-`` inicial do resto do texto."""
+    if texto[:1] in ("-", "+"):
+        return texto[1:].strip(), texto[0]
+    return texto, ""
 
 
 def _normalizar_numero(texto: str) -> str | None:

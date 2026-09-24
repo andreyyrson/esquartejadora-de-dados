@@ -64,6 +64,8 @@ def test_aceita_numeros_ja_convertidos(valor: Decimal | int) -> None:
         "--10,00",
         "(-10,00)",
         "-10,00 D",  # dois indicadores de sinal
+        "-R$ -10,00",
+        "+R$ -10,00",
         "10,00 X",
         "1e5",
         "NaN",
