@@ -7,7 +7,9 @@ name = "conciliador"
 version = "0.1.0"
 description = "Motor de conciliação bancária: lê extratos (OFX, PDF, CSV/Excel) e concilia contra o extrato do sistema."
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "ofxparse>=0.21",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -24,6 +26,10 @@ include = ["conciliador*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --strict-markers --cov=conciliador --cov-branch --cov-report=term-missing --cov-fail-under=95"
+filterwarnings = [
+    # Avisos internos do ofxparse (API antiga do BeautifulSoup), não do nosso código.
+    "ignore::DeprecationWarning:ofxparse.*",
+]
 
 [tool.coverage.run]
 source = ["conciliador"]
@@ -41,3 +47,7 @@ known-first-party = ["conciliador"]
 [tool.mypy]
 strict = true
 packages = ["conciliador"]
+
+[[tool.mypy.overrides]]
+module = ["ofxparse", "ofxparse.*"]
+ignore_missing_imports = true

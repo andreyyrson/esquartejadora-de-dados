@@ -49,18 +49,25 @@ def conta(
     *lancamentos: str,
     banco: str = "0341",
     numero: str = "12345-6",
-    saldo: str = "8500.00",
+    saldo: str | None = "8500.00",
+    periodo: bool = True,
 ) -> str:
     return (
         "<STMTTRNRS><TRNUID>1<STATUS><CODE>0<SEVERITY>INFO</STATUS>"
         "<STMTRS><CURDEF>BRL"
         f"<BANKACCTFROM><BANKID>{banco}<ACCTID>{numero}<ACCTTYPE>CHECKING"
         "</BANKACCTFROM>"
-        "<BANKTRANLIST><DTSTART>20240201<DTEND>20240229\n"
+        "<BANKTRANLIST>"
+        + ("<DTSTART>20240201<DTEND>20240229" if periodo else "")
+        + "\n"
         + "\n".join(lancamentos)
         + "\n</BANKTRANLIST>"
-        f"<LEDGERBAL><BALAMT>{saldo}<DTASOF>20240229</LEDGERBAL>"
-        "</STMTRS></STMTTRNRS>"
+        + (
+            f"<LEDGERBAL><BALAMT>{saldo}<DTASOF>20240229</LEDGERBAL>"
+            if saldo is not None
+            else ""
+        )
+        + "</STMTRS></STMTTRNRS>"
     )
 
 
@@ -113,6 +120,16 @@ class TestLeituraBasica:
         assert extrato.data_saldo == date(2024, 2, 29)
         assert extrato.inicio == date(2024, 2, 1)
         assert extrato.fim == date(2024, 2, 29)
+
+    def test_sem_periodo_e_sem_saldo_ficam_vazios(self, tmp_path: Path) -> None:
+        # Vários bancos omitem DTSTART/DTEND e LEDGERBAL.
+        arquivo = gravar(tmp_path, ofx(conta(lancamento(), saldo=None, periodo=False)))
+        [extrato] = ler_ofx(arquivo)
+        assert extrato.inicio is None
+        assert extrato.fim is None
+        assert extrato.saldo_final is None
+        assert extrato.data_saldo is None
+        assert len(extrato.transacoes) == 1
 
     def test_aceita_caminho_como_texto(self, tmp_path: Path) -> None:
         arquivo = gravar(tmp_path, ofx(conta(lancamento())))
@@ -222,6 +239,13 @@ class TestArquivosInvalidos:
     def test_valor_ilegivel(self) -> None:
         conteudo = ofx(conta(lancamento(valor="abc"))).encode()
         with pytest.raises(LeituraInvalida, match=r"ruim\.ofx"):
+            ler_ofx_bytes(conteudo, nome="ruim.ofx")
+
+    @pytest.mark.parametrize("valor", ["NaN", "Infinity"])
+    def test_valor_nao_numerico_aceito_pelo_ofxparse(self, valor: str) -> None:
+        # O ofxparse aceita NaN/Infinity; o modelo Transacao recusa.
+        conteudo = ofx(conta(lancamento(valor=valor))).encode()
+        with pytest.raises(LeituraInvalida, match=r"ruim\.ofx.*valor"):
             ler_ofx_bytes(conteudo, nome="ruim.ofx")
 
     def test_arquivo_inexistente(self, tmp_path: Path) -> None:
