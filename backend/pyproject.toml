@@ -35,6 +35,9 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
 
+[tool.ruff.lint.isort]
+known-first-party = ["conciliador"]
+
 [tool.mypy]
 strict = true
 packages = ["conciliador"]
