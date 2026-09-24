@@ -1,6 +1,7 @@
 from datetime import date, datetime
 
 import pytest
+
 from conciliador.datas import DataInvalida, parse_data
 
 

@@ -1,9 +1,10 @@
 import contextlib
 from datetime import date
 
-from conciliador.datas import DataInvalida, parse_data
 from hypothesis import given
 from hypothesis import strategies as st
+
+from conciliador.datas import DataInvalida, parse_data
 
 # Ano com dois dígitos: 69-99 -> 1969-1999 e 00-68 -> 2000-2068.
 datas = st.dates(min_value=date(1969, 1, 1), max_value=date(2068, 12, 31))
