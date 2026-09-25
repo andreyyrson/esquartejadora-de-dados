@@ -1,0 +1,3 @@
+#!/bin/sh
+# Bloqueia o commit se a mensagem tiver dados sensíveis.
+exec python3 -m ferramentas.verificar_dados_sensiveis --mensagem "$1"
