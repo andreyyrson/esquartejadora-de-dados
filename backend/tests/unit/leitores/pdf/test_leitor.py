@@ -6,6 +6,7 @@ import pytest
 from conciliador.leitores.erros import LeituraInvalida
 from conciliador.leitores.pdf.leitor import identificar_banco, ler_pdf, ler_pdf_bytes
 from tests.apoio.pdf import gerar_pdf
+from tests.unit.leitores.pdf.bancos.test_bradesco import EXTRATO as BRADESCO
 from tests.unit.leitores.pdf.bancos.test_itau import EXTRATO as ITAU
 from tests.unit.leitores.pdf.bancos.test_sicoob import CURTO
 
@@ -16,6 +17,10 @@ def test_identifica_o_banco_pelo_texto() -> None:
 
 def test_identifica_o_itau() -> None:
     assert identificar_banco(ITAU) == "itau"
+
+
+def test_identifica_o_bradesco() -> None:
+    assert identificar_banco(BRADESCO) == "bradesco"
 
 
 def test_banco_desconhecido() -> None:
