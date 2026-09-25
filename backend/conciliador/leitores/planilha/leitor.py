@@ -25,6 +25,7 @@ def ler_planilha(conteudo: bytes, *, nome: str, perfil: Perfil) -> Extrato:
     saldo_inicial: Decimal | None = None
     saldo_final: Decimal | None = None
     transacoes: list[Transacao] = []
+    saldos: list[tuple[int, str, Decimal, Decimal | None]] = []
     for numero, linha in enumerate(
         linhas[numero_cabecalho:], start=numero_cabecalho + 1
     ):
@@ -49,15 +50,19 @@ def ler_planilha(conteudo: bytes, *, nome: str, perfil: Perfil) -> Extrato:
         )
         try:
             valor = _valor(perfil, celula)
-            if valor is None:
-                continue
+            saldo_da_linha = _numero(celula(perfil.saldo))
             chave = normalizar(descricao)
+            informado = valor if valor is not None else saldo_da_linha
             if any(chave.startswith(normalizar(s)) for s in perfil.saldo_inicial):
-                saldo_inicial = valor if saldo_inicial is None else saldo_inicial
+                if saldo_inicial is None:
+                    saldo_inicial = informado
                 continue
             if any(chave.startswith(normalizar(s)) for s in perfil.saldo_final):
-                saldo_final = valor
+                saldo_final = informado
                 continue
+            if valor is None:
+                continue
+            saldos.append((numero, descricao, valor, saldo_da_linha))
             data = _data(perfil, celula, inicio, fim)
             documento = celula(perfil.documento)
             transacoes.append(
@@ -74,14 +79,53 @@ def ler_planilha(conteudo: bytes, *, nome: str, perfil: Perfil) -> Extrato:
         except (ValorInvalido, DataInvalida, TransacaoInvalida) as exc:
             raise LeituraInvalida(f"{nome}, linha {numero}: {exc}") from exc
 
+    avisos: tuple[str, ...] = ()
+    if perfil.saldo is not None:
+        saldo_inicial, saldo_final, avisos = _sequencia_de_saldos(
+            saldos, saldo_inicial, saldo_final, nome
+        )
     return Extrato(
         transacoes=tuple(transacoes),
         banco=perfil.banco,
+        avisos=avisos,
         saldo_inicial=saldo_inicial,
         saldo_final=saldo_final,
         inicio=inicio,
         fim=fim,
     )
+
+
+def _sequencia_de_saldos(
+    saldos: Sequence[tuple[int, str, Decimal, Decimal | None]],
+    saldo_inicial: Decimal | None,
+    saldo_final: Decimal | None,
+    nome: str,
+) -> tuple[Decimal | None, Decimal | None, tuple[str, ...]]:
+    """Confere cada lançamento contra o saldo impresso na linha."""
+    com_saldo = [s for s in saldos if s[3] is not None]
+    if not com_saldo:
+        return saldo_inicial, saldo_final, ()
+    if saldo_inicial is None:
+        _, _, valor, saldo = saldos[0]
+        if saldo is not None:
+            saldo_inicial = saldo - valor
+    if saldo_final is None:
+        saldo_final = com_saldo[-1][3]
+    avisos: list[str] = []
+    corrente = saldo_inicial
+    for numero, descricao, valor, saldo in saldos:
+        if corrente is None:
+            break
+        esperado = corrente + valor
+        if saldo is not None and saldo != esperado:
+            avisos.append(
+                f"{nome}, linha {numero}: saldo não fecha em '{descricao}': "
+                f"{corrente} + {valor} = {esperado}, mas a planilha mostra "
+                f"{saldo} (diferença {saldo - esperado}); algum lançamento "
+                "pode ter ficado de fora."
+            )
+        corrente = saldo if saldo is not None else esperado
+    return saldo_inicial, saldo_final, tuple(avisos)
 
 
 def _cabecalho(

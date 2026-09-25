@@ -1,0 +1,16 @@
+nome = "safra"
+banco = "422"
+origem = "banco"
+reconhecer = ["Banco Safra", "Extrato de Movimentação"]
+# Datas vêm sem ano (DD/MM); o ano sai do período.
+periodo = 'Período de (\d{2}/\d{2}/\d{4}) a (\d{2}/\d{2}/\d{4})'
+
+[colunas]
+data = ["Data"]
+descricao = ["Lançamento", "Complemento"]
+valor = "Valor"
+documento = "Nº Documento"
+
+[ignorar]
+coluna = "Tipo do Lançamento"
+valores = ["Saldo"]

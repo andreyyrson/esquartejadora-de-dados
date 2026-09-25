@@ -1,0 +1,19 @@
+nome = "bradesco"
+banco = "237"
+origem = "banco"
+reconhecer = ["Bradesco Net Empresa", "Dcto."]
+
+[colunas]
+data = ["Data"]
+descricao = ["Lançamento"]
+credito = "Crédito (R$)"
+debito = "Débito (R$)"
+documento = "Dcto."
+saldo = "Saldo (R$)"
+
+[saldos]
+inicial = ["SALDO ANTERIOR"]
+
+# "Total" encerra o período; "Últimos Lançamentos" fica de fora.
+[fim]
+marcadores = ["Total"]
