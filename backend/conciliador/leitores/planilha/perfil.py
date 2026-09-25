@@ -25,6 +25,7 @@ class Perfil:
     credito: str | None = None
     debito: str | None = None
     documento: str | None = None
+    saldo: str | None = None  # coluna com o saldo após cada lançamento
     banco: str | None = None
     reconhecer: tuple[str, ...] = ()
     saldo_inicial: tuple[str, ...] = ()
@@ -37,7 +38,7 @@ class Perfil:
 
     def colunas(self) -> tuple[str, ...]:
         opcionais = (self.valor, self.natureza, self.credito, self.debito)
-        extras = (self.documento, self.ignorar_coluna)
+        extras = (self.documento, self.saldo, self.ignorar_coluna)
         return (
             *self.datas,
             *self.descricoes,
@@ -80,6 +81,7 @@ def carregar_perfil(texto: str) -> Perfil:
         credito=colunas.get("credito"),
         debito=colunas.get("debito"),
         documento=colunas.get("documento"),
+        saldo=colunas.get("saldo"),
         banco=dados.get("banco"),
         reconhecer=tuple(dados.get("reconhecer", ())),
         saldo_inicial=tuple(saldos.get("inicial", ())),
