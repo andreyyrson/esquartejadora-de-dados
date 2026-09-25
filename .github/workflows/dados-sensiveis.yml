@@ -1,0 +1,19 @@
+name: dados-sensiveis
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # verifica também as mensagens de todos os commits
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest
+      - run: python -m pytest -q ferramentas
+      - run: python -m ferramentas.verificar_dados_sensiveis
