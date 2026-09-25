@@ -9,6 +9,7 @@ description = "Motor de conciliação bancária: lê extratos (OFX, PDF, CSV/Exc
 requires-python = ">=3.11"
 dependencies = [
     "ofxparse>=0.21",
+    "pdfplumber>=0.11",
 ]
 
 [project.optional-dependencies]
@@ -18,6 +19,7 @@ dev = [
     "hypothesis>=6.100",
     "ruff>=0.6",
     "mypy>=1.10",
+    "reportlab>=4",
 ]
 
 [tool.setuptools.packages.find]
@@ -49,5 +51,5 @@ strict = true
 packages = ["conciliador"]
 
 [[tool.mypy.overrides]]
-module = ["ofxparse", "ofxparse.*"]
+module = ["ofxparse", "ofxparse.*", "pdfplumber", "pdfplumber.*", "pdfminer.*"]
 ignore_missing_imports = true
