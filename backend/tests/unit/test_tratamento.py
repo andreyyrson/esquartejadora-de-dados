@@ -129,8 +129,19 @@ class TestLimpezaEContraparte:
         tratado = tratar(lanc("Transf Pix enviada -   Conceição   Exemplo  "))
         assert tratado.descricao_limpa == "CONCEICAO EXEMPLO"
 
-    def test_numero_que_nao_e_documento_valido_nao_vira_documento(self) -> None:
-        tratado = tratar(lanc("PIX ENVIADO PESSOA EXEMPLO 123.456.789-00"))
+    @pytest.mark.parametrize(
+        "numero",
+        [
+            "123.456.789-00",  # CPF com dígito errado
+            "111.111.111-11",  # todos os dígitos iguais
+            "11.222.333/0001-00",  # CNPJ com dígito errado
+            "00000000000000",
+        ],
+    )
+    def test_numero_que_nao_e_documento_valido_nao_vira_documento(
+        self, numero: str
+    ) -> None:
+        tratado = tratar(lanc(f"PIX ENVIADO PESSOA EXEMPLO {numero}"))
         assert tratado.contraparte.documento is None
 
     def test_descricao_sem_contraparte(self) -> None:
@@ -160,6 +171,7 @@ class TestTipo:
             ("DOC ELETRONICO", TipoLancamento.DOC),
             ("Boleto pago - EMPRESA", TipoLancamento.BOLETO),
             ("PAGTO ELETRON COBRANCA", TipoLancamento.BOLETO),
+            ('Pagamento efetuado: "EMPRESA EXEMPLO"', TipoLancamento.BOLETO),  # Inter
             ("LIQUIDACAO COBRANCA EXEMPLO", TipoLancamento.BOLETO),
             ("RECEBIMENTO REDE CARTAO EXEMPLO", TipoLancamento.CARTAO),
             ("RSHOP-PADARIA EXEMPLO", TipoLancamento.CARTAO),
