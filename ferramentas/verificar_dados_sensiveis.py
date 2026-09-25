@@ -20,6 +20,7 @@ Uso:
 from __future__ import annotations
 
 import argparse
+import functools
 import re
 import subprocess
 import sys
@@ -64,12 +65,29 @@ def arquivo_proibido(caminho: str | Path) -> bool:
 
 
 def termos_encontrados(texto: str, termos: Iterable[str]) -> list[str]:
+    combinada, individuais = _buscas(frozenset(termos))
     normalizado = _normalizar(texto)
-    return sorted(
-        termo
-        for termo in termos
-        if re.search(rf"\b{re.escape(_normalizar(termo))}\b", normalizado)
+    # A busca combinada descarta rápido as linhas limpas (quase todas); só
+    # nas suspeitas cada termo é testado, para achar também os sobrepostos.
+    if combinada is None or not combinada.search(normalizado):
+        return []
+    return sorted(termo for termo, busca in individuais if busca.search(normalizado))
+
+
+@functools.lru_cache(maxsize=4)
+def _buscas(
+    termos: frozenset[str],
+) -> tuple[re.Pattern[str] | None, tuple[tuple[str, re.Pattern[str]], ...]]:
+    normalizados = {termo: _normalizar(termo) for termo in termos}
+    if not normalizados:
+        return None, ()
+    alternativas = "|".join(
+        re.escape(n) for n in sorted(set(normalizados.values()), key=len, reverse=True)
     )
+    individuais = tuple(
+        (termo, re.compile(rf"\b{re.escape(n)}\b")) for termo, n in normalizados.items()
+    )
+    return re.compile(rf"\b(?:{alternativas})\b"), individuais
 
 
 def verificar(
