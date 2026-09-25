@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "conciliador"
+version = "0.1.0"
+description = "Motor de conciliação bancária: lê extratos (OFX, PDF, CSV/Excel) e concilia contra o extrato do sistema."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=5",
+    "hypothesis>=6.100",
+    "ruff>=0.6",
+    "mypy>=1.10",
+]
+
+[tool.setuptools.packages.find]
+include = ["conciliador*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers --cov=conciliador --cov-branch --cov-report=term-missing --cov-fail-under=95"
+
+[tool.coverage.run]
+source = ["conciliador"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["conciliador"]
+
+[tool.mypy]
+strict = true
+packages = ["conciliador"]
