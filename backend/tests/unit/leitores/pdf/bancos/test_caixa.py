@@ -103,6 +103,11 @@ class TestErros:
         with pytest.raises(LeituraInvalida, match=r"caixa\.pdf"):
             extrair("Gerenciador CAIXA\nnenhum lançamento\n")
 
+    def test_periodo_com_data_impossivel(self) -> None:
+        texto = EXTRATO.replace("a 31/08/2026", "a 32/08/2026")
+        with pytest.raises(LeituraInvalida, match=r"caixa\.pdf"):
+            extrair(texto)
+
     def test_data_impossivel(self) -> None:
         texto = EXTRATO.replace("05/08/2026", "31/02/2026")
         with pytest.raises(LeituraInvalida, match=r"caixa\.pdf"):
