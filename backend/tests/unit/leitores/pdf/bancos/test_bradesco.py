@@ -105,6 +105,16 @@ class TestSaldos:
         assert conferir_saldo(extrato).status is StatusConferencia.BATE
         assert extrato.avisos == ()
 
+    def test_saldo_anterior_repetido_na_pagina_seguinte_vale_o_primeiro(
+        self,
+    ) -> None:
+        texto = EXTRATO.replace(
+            "PIX ENVIADO\n", "SALDO ANTERIOR 254,10\nSALDO ANTERIOR\nPIX ENVIADO\n"
+        )
+        extrato = extrair(texto)
+        assert extrato.saldo_inicial == Decimal("1000.00")
+        assert extrato.avisos == ()
+
     def test_sem_saldo_anterior_usa_o_saldo_da_primeira_linha(self) -> None:
         texto = EXTRATO.replace("SALDO ANTERIOR 1.000,00\n", "")
         assert extrair(texto).saldo_inicial == Decimal("1000.00")
@@ -125,6 +135,11 @@ class TestErros:
     def test_sem_lancamentos(self) -> None:
         with pytest.raises(LeituraInvalida, match=r"bradesco\.pdf"):
             extrair("Data Lançamento Dcto. Crédito (R$) Débito (R$) Saldo (R$)\n")
+
+    def test_data_impossivel(self) -> None:
+        texto = EXTRATO.replace("05/08/2026", "31/02/2026")
+        with pytest.raises(LeituraInvalida, match=r"bradesco\.pdf"):
+            extrair(texto)
 
     def test_lancamento_sem_data(self) -> None:
         texto = EXTRATO.replace("03/08/2026 PIX RECEBIDO", "PIX RECEBIDO")
