@@ -7,7 +7,7 @@ from typing import Protocol
 
 from conciliador.extrato import Extrato
 from conciliador.leitores.erros import LeituraInvalida
-from conciliador.leitores.pdf.bancos import sicoob
+from conciliador.leitores.pdf.bancos import itau, sicoob
 from conciliador.leitores.pdf.texto import extrair_paginas
 
 
@@ -20,7 +20,7 @@ class _Layout(Protocol):
 
 
 # Ordem importa: detectores mais específicos antes dos mais frouxos.
-_LAYOUTS: tuple[_Layout, ...] = (sicoob,)
+_LAYOUTS: tuple[_Layout, ...] = (sicoob, itau)
 
 
 def identificar_banco(texto: str) -> str | None:

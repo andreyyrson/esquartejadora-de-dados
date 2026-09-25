@@ -19,3 +19,5 @@ class Extrato:
     data_saldo: date | None = None
     inicio: date | None = None
     fim: date | None = None
+    # O que o leitor deixou de fora ou não conseguiu garantir.
+    avisos: tuple[str, ...] = ()
