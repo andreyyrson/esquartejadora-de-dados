@@ -4,6 +4,7 @@ Os CPFs e CNPJs abaixo são gerados só para teste (dígitos verificadores
 calculados sobre números sequenciais), não pertencem a ninguém.
 """
 
+import time
 from pathlib import Path
 
 import pytest
@@ -141,3 +142,35 @@ class TestVerificar:
         binario = tmp_path / "imagem.png"
         binario.write_bytes(b"\x89PNG\x00\xff\xfe")
         assert verificar([binario, tmp_path / "sumiu.py"], raiz=tmp_path) == []
+
+
+class TestDesempenho:
+    def test_lista_grande_de_termos_e_arquivo_grande_em_poucos_segundos(
+        self, tmp_path: Path
+    ) -> None:
+        # Uma lista local real tem milhares de nomes; o hook roda a cada commit.
+        termos = {f"FORNECEDOR FICTICIO {i} LTDA" for i in range(3000)}
+        arquivo = tmp_path / "codigo.py"
+        arquivo.write_text(
+            "\n".join(
+                f"valor_{i} = parse_valor('{i},00')  # linha {i}" for i in range(2000)
+            )
+        )
+        inicio = time.perf_counter()
+        assert verificar([arquivo], raiz=tmp_path, termos=termos) == []
+        assert time.perf_counter() - inicio < 5
+
+    def test_lista_grande_ainda_acha_o_termo(self, tmp_path: Path) -> None:
+        termos = {f"FORNECEDOR FICTICIO {i} LTDA" for i in range(3000)}
+        arquivo = tmp_path / "teste.py"
+        arquivo.write_text("ok\ndescr = 'fornecedor ficticio 1234 ltda'\n")
+        assert verificar([arquivo], raiz=tmp_path, termos=termos) == [
+            Achado("teste.py", 2, "termo proibido", "FORNECEDOR FICTICIO 1234 LTDA")
+        ]
+
+    def test_termos_sobrepostos_sao_todos_encontrados(self) -> None:
+        termos = {"JOSE DA SILVA", "SILVA"}
+        assert termos_encontrados("pago a jose da silva", termos) == [
+            "JOSE DA SILVA",
+            "SILVA",
+        ]
