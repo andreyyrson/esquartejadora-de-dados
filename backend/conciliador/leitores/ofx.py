@@ -33,6 +33,9 @@ _CABECALHO_UTF8 = (
     "ENCODING:UTF-8\nCHARSET:NONE\nCOMPRESSION:NONE\n"
     "OLDFILEUID:NONE\nNEWFILEUID:NONE\n\n"
 )
+# Linhas de saldo que alguns bancos (Itaú) exportam como lançamentos.
+_SALDO_INICIAL = ("SALDO ANTERIOR",)
+_SALDO_DO_DIA = ("SALDO TOTAL DISPONÍVEL DIA", "SALDO DO DIA")
 _INICIO_OFX = re.compile(r"<OFX>", re.IGNORECASE)
 _FUSO_EM_DATA = re.compile(
     r"(<DT[A-Z]+>\s*[0-9]{8,14}(?:\.[0-9]+)?)\s*\[[^\]<]*\]", re.IGNORECASE
@@ -79,8 +82,11 @@ def _normalizar(conteudo: bytes, nome: str) -> str:
 def _extrato(conta: Any, nome: str) -> Extrato:
     extrato = conta.statement
     numero = conta.account_id or None
-    transacoes = tuple(
-        Transacao.criar(
+    saldo_inicial: Decimal | None = None
+    saldo_do_dia: tuple[Decimal, date] | None = None
+    transacoes: list[Transacao] = []
+    for posicao, t in enumerate(extrato.transactions, start=1):
+        transacao = Transacao.criar(
             data=t.date,
             valor=t.amount,
             descricao=t.memo or t.payee,
@@ -90,14 +96,30 @@ def _extrato(conta: Any, nome: str) -> Extrato:
             arquivo=nome,
             linha=posicao,
         )
-        for posicao, t in enumerate(extrato.transactions, start=1)
-    )
+        marcador = transacao.descricao.upper()
+        if marcador.startswith(_SALDO_INICIAL):
+            saldo_inicial = transacao.valor if saldo_inicial is None else saldo_inicial
+        elif marcador.startswith(_SALDO_DO_DIA):
+            saldo_do_dia = (transacao.valor, transacao.data)
+        else:
+            transacoes.append(transacao)
+
+    # Os saldos do dia vêm dentro do período; o LEDGERBAL pode ser de uma
+    # data posterior, e aí não confere com os lançamentos do arquivo.
+    saldo_final: Decimal | None
+    data_saldo: date | None
+    if saldo_do_dia is not None:
+        saldo_final, data_saldo = saldo_do_dia
+    else:
+        saldo_final = _decimal_opcional(getattr(extrato, "balance", None))
+        data_saldo = _data_opcional(getattr(extrato, "balance_date", None))
     return Extrato(
-        transacoes=transacoes,
+        transacoes=tuple(transacoes),
         banco=conta.routing_number or None,
         conta=numero,
-        saldo_final=_decimal_opcional(getattr(extrato, "balance", None)),
-        data_saldo=_data_opcional(getattr(extrato, "balance_date", None)),
+        saldo_inicial=saldo_inicial,
+        saldo_final=saldo_final,
+        data_saldo=data_saldo,
         inicio=_data_opcional(getattr(extrato, "start_date", None)),
         fim=_data_opcional(getattr(extrato, "end_date", None)),
     )
