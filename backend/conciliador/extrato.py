@@ -14,6 +14,7 @@ class Extrato:
     transacoes: tuple[Transacao, ...]
     banco: str | None = None
     conta: str | None = None
+    saldo_inicial: Decimal | None = None
     saldo_final: Decimal | None = None
     data_saldo: date | None = None
     inicio: date | None = None
