@@ -28,6 +28,9 @@ dev = [
 [tool.setuptools.packages.find]
 include = ["conciliador*"]
 
+[tool.setuptools.package-data]
+"conciliador.leitores.planilha.perfis" = ["*.toml"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --strict-markers --cov=conciliador --cov-branch --cov-report=term-missing --cov-fail-under=95"
