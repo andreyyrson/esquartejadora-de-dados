@@ -248,3 +248,54 @@ class TestPerfilInvalido:
     def test_perfil_invalido(self, texto: str) -> None:
         with pytest.raises(PerfilInvalido):
             carregar_perfil(texto)
+
+
+PERFIL_COM_SALDO = carregar_perfil(
+    """
+nome = "saldo"
+origem = "banco"
+[colunas]
+data = ["Data"]
+descricao = ["Lançamento"]
+credito = "Crédito"
+debito = "Débito"
+saldo = "Saldo"
+[saldos]
+inicial = ["SALDO ANTERIOR"]
+[fim]
+marcadores = ["Total"]
+"""
+)
+COM_SALDO: list[list[object]] = [
+    ["Data", "Lançamento", "Crédito", "Débito", "Saldo"],
+    ["31/01/2024", "SALDO ANTERIOR", "", "", "1.000,00"],
+    ["01/02/2024", "PIX RECEBIDO", "500,00", "", "1.500,00"],
+    ["02/02/2024", "TARIFA", "", "-45,90", "1.454,10"],
+    ["03/02/2024", "PIX ENVIADO", "", "-1.500,00", "-45,90"],
+    ["Total", "", "500,00", "-1.545,90", "-45,90"],
+]
+
+
+class TestColunaDeSaldo:
+    def test_saldo_anterior_vem_da_coluna_de_saldo(self) -> None:
+        extrato = ler(gerar_xlsx(COM_SALDO), PERFIL_COM_SALDO)
+        assert extrato.saldo_inicial == Decimal("1000.00")
+        assert len(extrato.transacoes) == 3
+
+    def test_saldo_final_e_o_da_ultima_linha(self) -> None:
+        extrato = ler(gerar_xlsx(COM_SALDO), PERFIL_COM_SALDO)
+        assert extrato.saldo_final == Decimal("-45.90")
+        assert conferir_saldo(extrato).status is StatusConferencia.BATE
+        assert extrato.avisos == ()
+
+    def test_sem_saldo_anterior_usa_a_primeira_linha(self) -> None:
+        extrato = ler(gerar_xlsx([COM_SALDO[0], *COM_SALDO[2:]]), PERFIL_COM_SALDO)
+        assert extrato.saldo_inicial == Decimal("1000.00")
+
+    def test_linha_perdida_vira_aviso_com_a_linha_e_a_diferenca(self) -> None:
+        sem_tarifa = [linha for linha in COM_SALDO if linha[1] != "TARIFA"]
+        extrato = ler(gerar_xlsx(sem_tarifa), PERFIL_COM_SALDO)
+        assert conferir_saldo(extrato).status is StatusConferencia.NAO_BATE
+        [aviso] = extrato.avisos
+        assert "linha 4" in aviso
+        assert "diferença -45.90" in aviso
