@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.hypothesis/
+node_modules/
+.next/
+
+# Dados de clientes nunca vão para o repositório. Extratos e planilhas só
+# são aceitos em backend/tests/dados_ficticios/ (dados inventados).
+# Ver ferramentas/verificar_dados_sensiveis.py.
+*.[oO][fF][xX]
+*.[xX][lL][sS][xX]
+*.[xX][lL][sS]
+*.[cC][sS][vV]
+*.[pP][dD][fF]
+!backend/tests/dados_ficticios/**
+.dados-sensiveis.txt

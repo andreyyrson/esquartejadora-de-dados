@@ -116,7 +116,9 @@ class TestVerificar:
         arquivo = tmp_path / "teste.py"
         arquivo.write_text("descr = 'FORNECEDOR SECRETO LTDA'\n")
         achados = verificar([arquivo], raiz=tmp_path, termos={"fornecedor secreto"})
-        assert achados == [Achado("teste.py", 1, "termo proibido", "fornecedor secreto")]
+        assert achados == [
+            Achado("teste.py", 1, "termo proibido", "fornecedor secreto")
+        ]
 
     def test_mensagens_de_commit(self, tmp_path: Path) -> None:
         achados = verificar(
