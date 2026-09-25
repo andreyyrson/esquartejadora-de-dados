@@ -17,8 +17,8 @@ from ferramentas.verificar_dados_sensiveis import (
     verificar,
 )
 
-CPF_VALIDO = "123.456.789-09"
-CNPJ_VALIDO = "11.222.333/0001-81"
+CPF_VALIDO = "123.456.789-09"  # dados-sensiveis: exemplo
+CNPJ_VALIDO = "11.222.333/0001-81"  # dados-sensiveis: exemplo
 
 
 class TestCpf:
@@ -41,7 +41,8 @@ class TestCnpj:
         assert cnpjs(f"PAGAMENTO EMPRESA {CNPJ_VALIDO}") == [CNPJ_VALIDO]
 
     def test_encontra_cnpj_sem_pontuacao_depois_da_palavra_cnpj(self) -> None:
-        assert cnpjs("CONSORCIO CNPJ11222333000181") == ["11222333000181"]
+        texto = "CONSORCIO CNPJ11222333000181"  # dados-sensiveis: exemplo
+        assert cnpjs(texto) == ["11222333000181"]  # dados-sensiveis: exemplo
 
     def test_ignora_cnpj_com_digito_invalido(self) -> None:
         assert cnpjs("11.222.333/0001-00") == []
@@ -122,6 +123,17 @@ class TestVerificar:
             [], raiz=tmp_path, mensagens={"abc1234": f"feat: x\n\nCNPJ {CNPJ_VALIDO}"}
         )
         assert achados == [Achado("commit abc1234", 3, "CNPJ", CNPJ_VALIDO)]
+
+    def test_linha_marcada_como_exemplo_e_ignorada(self, tmp_path: Path) -> None:
+        arquivo = tmp_path / "teste.py"
+        marcador = "# dados-sensiveis: " + "exemplo"
+        arquivo.write_text(f"cpf = '{CPF_VALIDO}'  {marcador}\n")
+        assert verificar([arquivo], raiz=tmp_path) == []
+
+    def test_marcador_nao_vale_para_arquivo_proibido(self, tmp_path: Path) -> None:
+        arquivo = tmp_path / "extrato.pdf"
+        arquivo.write_text("# dados-sensiveis: " + "exemplo")
+        assert len(verificar([arquivo], raiz=tmp_path)) == 1
 
     def test_arquivo_binario_ou_inexistente_e_ignorado(self, tmp_path: Path) -> None:
         binario = tmp_path / "imagem.png"
