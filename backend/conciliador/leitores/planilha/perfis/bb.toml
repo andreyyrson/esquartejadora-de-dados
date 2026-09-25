@@ -1,0 +1,16 @@
+# Banco do Brasil: extrato de conta corrente exportado em Excel.
+nome = "bb"
+banco = "001"
+origem = "banco"
+reconhecer = ["Extrato Conta Corrente", "Data balancete", "Detalhamento Hist."]
+
+[colunas]
+data = ["Data"]
+descricao = ["Historico", "Detalhamento Hist."]
+valor = "Valor R$"
+natureza = "Inf."
+documento = "Numero Documento"
+
+[saldos]
+inicial = ["Saldo Anterior"]
+final = ["S A L D O"]
