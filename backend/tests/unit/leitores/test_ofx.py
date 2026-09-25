@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from conciliador.conferencia import StatusConferencia, conferir_saldo
 from conciliador.leitores.ofx import LeituraInvalida, ler_ofx, ler_ofx_bytes
 from conciliador.transacao import Origem
 
@@ -201,6 +202,60 @@ class TestArquivosDeBancosBrasileiros:
     def test_valor_com_virgula(self, tmp_path: Path, texto: str, esperado: str) -> None:
         [extrato] = ler_ofx(gravar(tmp_path, ofx(conta(lancamento(valor=texto)))))
         assert extrato.transacoes[0].valor == Decimal(esperado)
+
+
+class TestLinhasDeSaldoDoItau:
+    """O Itaú exporta os saldos como se fossem lançamentos."""
+
+    def extrato_itau(self, tmp_path: Path) -> Path:
+        return gravar(
+            tmp_path,
+            ofx(
+                conta(
+                    lancamento("10.00", "20240131", "SALDO ANTERIOR", fitid="1"),
+                    lancamento("1000.00", "20240201", "RECEBIMENTO CARTAO", fitid="2"),
+                    lancamento("-990.00", "20240201", "PIX ENVIADO", fitid="3"),
+                    lancamento(
+                        "20.00", "20240201", "SALDO TOTAL DISPONÍVEL DIA", fitid="4"
+                    ),
+                    lancamento("-5.00", "20240205", "TARIFA", fitid="5"),
+                    lancamento(
+                        "15.00", "20240205", "SALDO TOTAL DISPONÍVEL DIA", fitid="6"
+                    ),
+                    saldo="99.99",  # LEDGERBAL de data posterior ao período
+                )
+            ),
+            "utf-8",
+        )
+
+    def test_saldos_nao_sao_lancamentos(self, tmp_path: Path) -> None:
+        [extrato] = ler_ofx(self.extrato_itau(tmp_path))
+        assert [t.descricao for t in extrato.transacoes] == [
+            "RECEBIMENTO CARTAO",
+            "PIX ENVIADO",
+            "TARIFA",
+        ]
+
+    def test_saldo_anterior_e_ultimo_saldo_do_dia(self, tmp_path: Path) -> None:
+        [extrato] = ler_ofx(self.extrato_itau(tmp_path))
+        assert extrato.saldo_inicial == Decimal("10.00")
+        assert extrato.saldo_final == Decimal("15.00")
+        assert extrato.data_saldo == date(2024, 2, 5)
+        assert conferir_saldo(extrato).status is StatusConferencia.BATE
+
+    def test_linha_continua_sendo_a_posicao_no_arquivo(self, tmp_path: Path) -> None:
+        [extrato] = ler_ofx(self.extrato_itau(tmp_path))
+        assert [t.linha for t in extrato.transacoes] == [2, 3, 5]
+
+    def test_descricao_que_so_comeca_com_saldo_e_lancamento(
+        self, tmp_path: Path
+    ) -> None:
+        arquivo = gravar(
+            tmp_path, ofx(conta(lancamento("-10.00", memo="SALDO DEVEDOR JUROS")))
+        )
+        [extrato] = ler_ofx(arquivo)
+        assert [t.descricao for t in extrato.transacoes] == ["SALDO DEVEDOR JUROS"]
+        assert extrato.saldo_inicial is None
 
 
 class TestDescricaoEDocumento:
