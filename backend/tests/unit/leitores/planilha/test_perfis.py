@@ -140,7 +140,7 @@ def test_bradesco_le_ate_o_total_e_confere_o_saldo() -> None:
 SAFRA: list[list[object]] = [
     ["Banco Safra S/A "],
     ["Conta Corrente - Extrato de Movimentação"],
-    ["Período de 01/01/2024 a 29/02/2024"],
+    ["Período de 01/12/2023 a 29/02/2024"],
     [
         "Data",
         "Situação",
@@ -179,7 +179,7 @@ def test_safra_usa_o_ano_do_periodo_e_ignora_linhas_de_saldo() -> None:
     ]
     assert [t.documento for t in extrato.transacoes] == ["2222", "1111", "3333"]
     assert extrato.banco == "422"
-    assert extrato.inicio == date(2024, 1, 1)
+    assert extrato.inicio == date(2023, 12, 1)
 
 
 SISTEMA_CONTAS_PAGAS: list[list[object]] = [

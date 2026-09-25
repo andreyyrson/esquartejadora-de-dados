@@ -1,0 +1,12 @@
+# Relatório de contas pagas do ERP: pagamentos vêm positivos.
+nome = "sistema_contas_pagas"
+origem = "sistema"
+reconhecer = ["Dt. Compensação", "Valor Pago", "Parceiro"]
+inverter_sinal = true
+
+[colunas]
+# Compensação é a data em que sai do banco; pagamento é o reserva.
+data = ["Dt. Compensação", "Dt. Pagto"]
+descricao = ["Parceiro", "Histórico"]
+valor = "Valor Pago"
+documento = "Lanc."
