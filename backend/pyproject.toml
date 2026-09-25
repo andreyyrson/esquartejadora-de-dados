@@ -10,6 +10,7 @@ requires-python = ">=3.11"
 dependencies = [
     "ofxparse>=0.21",
     "pdfplumber>=0.11",
+    "openpyxl>=3.1",
 ]
 
 [project.optional-dependencies]
@@ -51,5 +52,5 @@ strict = true
 packages = ["conciliador"]
 
 [[tool.mypy.overrides]]
-module = ["ofxparse", "ofxparse.*", "pdfplumber", "pdfplumber.*", "pdfminer.*"]
+module = ["ofxparse", "ofxparse.*", "pdfplumber", "pdfplumber.*", "pdfminer.*", "openpyxl", "openpyxl.*"]
 ignore_missing_imports = true
