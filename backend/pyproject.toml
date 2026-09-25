@@ -52,5 +52,5 @@ strict = true
 packages = ["conciliador"]
 
 [[tool.mypy.overrides]]
-module = ["ofxparse", "ofxparse.*", "pdfplumber", "pdfplumber.*", "pdfminer.*"]
+module = ["ofxparse", "ofxparse.*", "pdfplumber", "pdfplumber.*", "pdfminer.*", "openpyxl", "openpyxl.*"]
 ignore_missing_imports = true
